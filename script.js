@@ -14,6 +14,7 @@ var paths;
 var snap_el;
 var target_points;
 var target_step = 1;
+var stroke_mode = 0;
 
 function init_svg() {
 
@@ -33,7 +34,7 @@ function init_svg() {
   ]
 
   end_path = build_star_path(n_pts,target_step,longest_dim, cx, cy)
-  path1 = draw.path(paths[path_idx]).stroke({ color: '#000', opacity: 1, width: 2 }).fill({opacity:.1, color:'black'})
+  path1 = draw.path(paths[path_idx]).stroke({ color: '#000', opacity: 1, width: stroke_mode*3+2 }).fill({opacity:.1, color:'white'})
   path2 = draw.path(end_path).stroke({ color: '#000', opacity: 0, width: 2 }).fill({opacity:.0, color:'red'})
 
   window.paths = paths;
@@ -51,8 +52,8 @@ function init_svg() {
 
 $(window).click(function() {
     path_idx = (path_idx + 1)%(paths.length)
-    console.log(target_step)
     if (path_idx == 0) target_step = (target_step + 18 % n_pts)
+    if (path_idx == 0) stroke_mode = (stroke_mode + 1 ) % 2
     snap_el.animate({ d: target_points }, 1000, mina.easeout, init_svg);  
 })
 
