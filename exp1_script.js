@@ -10,22 +10,11 @@ var longest_dim = width > height ? width : height;
 // SVG.js 
 var draw;
 var path_idx = 0;
-var paths = [];
+var paths;
 var snap_el;
 var target_points;
 var target_step = 1;
 var stroke_mode = 1;
-var group;
-var background;
-
-var svg_files = [
-  'assets/polyzorf.svg',
-  'assets/cutted.svg',
-  'assets/antiprism.svg',
-  'assets/goodshape.svg',
-  'assets/someshape.svg',
-  'assets/fancycosahedron.svg',
-]
 
 function init_svg() {
 
@@ -33,61 +22,40 @@ function init_svg() {
   draw = SVG('drawing').size(width, height);
   $(draw.node).attr('id','draw')
 
-  paths = [] 
-  load_svg_paths(svg_files[path_idx])
+  var cx, cy; 
 
-  group = draw.group() 
-  group.attr('stroke-linecap','round')
-  group.attr('stroke-linejoin','round')
+  cx = width/2; cy = height/2, n_pts = 51, r=100;
+  stroke = 1;
+  
+  paths = [
+    build_star_path(n_pts,13,100, cx, cy),
+    build_star_path(n_pts,17,100, cx, cy),
+    build_disjoint_path(n_pts,2,r, cx, cy,r/2 ),
+    build_lines(n_pts,2,r, cx, cy )
+  ]
 
-  background = draw.rect(width, height)
-  background.fill({opacity:0,color:'blue'})
+  end_path = build_star_path(n_pts,1,longest_dim, cx, cy)
+  path1 = draw.path(paths[path_idx]).stroke({ color: '#000', opacity: 1, width: (stroke_mode*3+2)+1 }).fill({opacity:.0, color:'white'})
+  path2 = draw.path(end_path).stroke({ color: '#000', opacity: 0, width: 2 }).fill({opacity:.0, color:'red'})
 
-  $(paths).each(function(i,path_string) {
-    var path = draw_path(group, path_string) 
-    $(window).click(function() {
-      path.animate(700,'>').stroke({width:0}).scale(1).fill({opacity:1})
-    })
-  })
+  window.path1 = path1
 
-  group.center(width/2,height/2)
-  group.scale(50,50)
+  $(path1.node).attr('id','path1')
+  $(path2.node).attr('id','path2')
+
+  snap_el = Snap.select('#path1');
+  var fancyCup = Snap.select('#path2');
+
+  var simpleCupPoints = snap_el.node.getAttribute('d');
+  target_points = fancyCup.node.getAttribute('d');
 }
 
 $(window).click(function() {
-  group.animate().scale(400)
-  background.animate().fill({opacity:1})
-
-  console.log(path_idx)
-  path_idx = (path_idx + 1) % svg_files.length
-  console.log(path_idx)
-
-  setTimeout(init_svg, 1000)
+    path_idx = (path_idx + 1)%(paths.length)
+    if (path_idx == 0) target_step = (target_step + 18 % n_pts)
+    if (path_idx == 0) stroke_mode = (stroke_mode + 1 ) % 2
+    snap_el.animate({ d: target_points }, 1000, mina.easeout, init_svg);  
 })
-
-function draw_path( parent_el, path_string ) {
-  return parent_el.path(path_string).stroke({ color: '#000', opacity: 1, width: .25 }).fill({opacity:0,color:'blue'})
-}
-
-function load_svg_paths(fid) {
-
-  $.ajax({
-    url:fid,
-    async:false,
-    dataType: "xml",
-    success:function(data) {
-      path_nodes = $(data).find('g').children()
-      window.path_nodes =  path_nodes
-      path_nodes.each(function(i,e) {
-        path = $(e).attr('d')
-        paths.push(path)
-      })
-
-    }
-  })   
-
-}
-
 
 function build_lines(n_points, step_size, r, cx, cy) {
   var arr = [];
